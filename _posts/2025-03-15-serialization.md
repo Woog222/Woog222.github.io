@@ -17,9 +17,7 @@ classes: wide
 
 ## Serialization
 
-**Serialization** is the process of converting complex data structures (like Django models or querysets) into Python primitive data types (such as dictionaries) that can be easily rendered into JSON, XML, or other content types. In Django REST Framework, this is accomplished by passing an `instance` to a serializer, which then transforms the object's attributes into a dictionary representation suitable for API responses.
-
-When serializing, the serializer's `to_representation` method is called internally to convert each field of the model instance into its corresponding primitive type. This process happens automatically when you access the serializer's `data` property.
+**Serialization** converts complex data structures (like Django models) into Python primitives (like dictionaries) for easy rendering into JSON, XML, etc. In Django REST Framework, passing an `instance` to a serializer transforms the object's attributes into a dictionary for API responses. This is done automatically when accessing the serializer's `data` property.
 
 
 ### Examples
@@ -46,7 +44,6 @@ class CommentSerializer(serializers.Serializer):
 ```
 
 ```bash
-
 $ python manage.py shell
 # omit import
 
@@ -66,7 +63,7 @@ $ python manage.py shell
 {'email': 'email3@gmail.com', 'content': 'content3', 'created': '2025-03-19T07:34:08.484342Z'}
 ]
 ```
-
+---
 #### Single django model Serialization
 
 ```python
@@ -166,7 +163,7 @@ book_serializer.data
 This is the result of serialization. Notice an important detail: the `PersonSerializer` class itself is declared as one of the serializer fields in `BookSerializer`. This field handles the serialization of the `Person` model, which is a foreign key in the `Book` model. This pattern is known as *nested serialization*. Let's examine how this process works internally. 
 
 
-
+---
 
 ### ```BaseSerializer``` 
 
@@ -232,6 +229,8 @@ class BaseSerializer(Field):
         return self._data
 ```
 The `to_representation` method is key to serialization in both `Serializer` and `Field` classes. Since `Serializer` inherits from `Field`, this method serves the same purpose in both: converting complex objects into primitive dictionaries that can be easily serialized to JSON. We'll explore this inheritance pattern further when discussing nested serialization.
+
+---
 
 ### ```to_representation```
 
