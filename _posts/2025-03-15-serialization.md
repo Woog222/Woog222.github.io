@@ -1,6 +1,6 @@
 ---
 layout: single
-title:  "Serialization Process"
+title:  "Understanding Serialization in DRF"
 typora-root-url: ../
 categories: django
 tag: [python, django]
@@ -15,12 +15,12 @@ classes: wide
 
 
 
-## Serialization
+## Serialization OverView
 
 **Serialization** converts complex data structures (like Django models) into Python primitives (like dictionaries) for easy rendering into JSON, XML, etc. In Django REST Framework, passing an `instance` to a serializer transforms the object's attributes into a dictionary for API responses. This is done automatically when accessing the serializer's `data` property.
 
 
-### Examples
+### Basic Serialization Example
 
 Let's begin our exploration with straightforward serialization examples to illustrate the core concepts.
 
@@ -101,9 +101,26 @@ $ python manage.py shell
 ]
 ```
 
+### Basic WorkFlow
+
+1. Create a Serializer instance with an instance to serializer. (Do not pass the data argument)
+```python
+comment = Comment(email = "abc134@gmail.com", content = "hello!") 
+serializer = CommentSerializer(instance=comment)
+```
+
+2. We can get the serialized data by accessing `data` attribute of the serializer.
+```python
+serializer.data 
+# {'email': 'abc134@gmail.com', 'content': 'hello!', 'created': '2025-03-19T06:58:28.929939Z'}
+```
+
+
 
 
 ## Core 
+
+Now, let's explore the internal flow of the serialization process in depth by examining the source code. We'll use the ```Book``` model and its ```BookSerializer``` as examples to illustrate how serialization works under the hood.
 
 ### Base model
 
@@ -139,7 +156,7 @@ class BookSerializer(serializers.Serializer):
     published = serializers.BooleanField()
 ```
 
-Now, let's explore the internal flow of the serialization process in depth by examining the source code. We'll use the ```Book``` model and its ```BookSerializer``` as examples to illustrate how serialization works under the hood.
+
 
 ```python
 author = Person.objects.create(name="John Doe", age=30, email="john.doe@example.com")
@@ -165,9 +182,9 @@ This is the result of serialization. Notice an important detail: the `PersonSeri
 
 ---
 
-### ```BaseSerializer``` 
+### BaseSerializer
 
-[**serializers.py**](https://github.com/encode/django-rest-framework/blob/master/rest_framework/serializers.py#)
+[*serializers.py*](https://github.com/encode/django-rest-framework/blob/master/rest_framework/serializers.py#)
 
 ```python
 author = Person.objects.create(name="John Doe", age=30, email="john.doe@example.com")
@@ -177,10 +194,10 @@ book_serializer = BookSerializer(book)
 print(book_serializer.instance)
 # My First Book written by John Doe (30 years old), published at True
 ```
-
 Now that we've created a ```BookSerializer``` instance with only a book instance passed to its initializer, the ```book_serializer``` stores this book object in its ```instance``` attribute. This is the starting point for the serialization process.
 
-This is how the initializer of ```Serializer``` class looks like
+This is how the ```Serializer``` class looks like
+
 
 ```python
 # rest_framework/serializers.py
@@ -193,6 +210,18 @@ class BaseSerializer(Field):
         self._context = kwargs.pop('context', {})
         kwargs.pop('many', None)
         super().__init__(**kwargs)
+
+    @property
+    def data(self):
+        # omit details
+        if not hasattr(self, '_data'):
+            if self.instance is not None and not getattr(self, '_errors', None):
+                self._data = self.to_representation(self.instance) # This is the case of serialization
+            elif hasattr(self, '_validated_data') and not getattr(self, '_errors', None):
+                self._data = self.to_representation(self.validated_data)
+            else:
+                self._data = self.get_initial()
+        return self._data
 ```
 
 
@@ -213,29 +242,15 @@ book_serializer.data
 '''
 ```
 
-```python
-# rest_framework/serializers.py
-class BaseSerializer(Field):
-    @property
-    def data(self):
-        # omit details
-        if not hasattr(self, '_data'):
-            if self.instance is not None and not getattr(self, '_errors', None):
-                self._data = self.to_representation(self.instance) # This is the case of serialization
-            elif hasattr(self, '_validated_data') and not getattr(self, '_errors', None):
-                self._data = self.to_representation(self.validated_data)
-            else:
-                self._data = self.get_initial()
-        return self._data
-```
+
 The `to_representation` method is key to serialization in both `Serializer` and `Field` classes. Since `Serializer` inherits from `Field`, this method serves the same purpose in both: converting complex objects into primitive dictionaries that can be easily serialized to JSON. We'll explore this inheritance pattern further when discussing nested serialization.
 
 ---
 
-### ```to_representation```
+### to_representation
 
-[**serializers.py**](https://github.com/encode/django-rest-framework/blob/master/rest_framework/serializers.py#L518)  
-[**fields.py**](https://github.com/encode/django-rest-framework/blob/master/rest_framework/fields.py)
+[*serializers.py*](https://github.com/encode/django-rest-framework/blob/master/rest_framework/serializers.py#L518)  
+[*fields.py*](https://github.com/encode/django-rest-framework/blob/master/rest_framework/fields.py)
 
 ```python
 # rest_framework/serializers.py
@@ -257,7 +272,7 @@ class Serializer(BaseSerializer, metaclass=SerializerMetaclass):
             ret[field.field_name] = field.to_representation(attribute)
         return ret
 ```
-```self._readable_fields``` is a Python generator that yields the declared field objects in the serializer class. For more details, refer to the serializers.py source code. For those who are curious about the method's inner workings, see below.
+```self._readable_fields``` is a Python generator that yields the declared field objects in the serializer class. For more details, refer to the [serializers.py](https://github.com/encode/django-rest-framework/blob/master/rest_framework/serializers.py). For those who are curious about the method's inner workings, see below.
 
 ```python
 for field in book_serializer._readable_fields:
