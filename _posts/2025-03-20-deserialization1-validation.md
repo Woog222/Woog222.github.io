@@ -375,6 +375,29 @@ class Serializer(BaseSerializer, metaclass=SerializerMetaclass):
 First, it applies default values to read-only fields. Then, it applies class-level validators by calling `Field.run_validators()`. (Note that `Serializer` itself is also a subclass of `Field`)
 
 
+## Next Steps
+
+```python
+comment_data = {
+    'content': 'foo barasdfasfasfs', 
+    'created': datetime.now()  + timedelta(days=1),
+    'last_updated': datetime.now() ,
+    'created_at': datetime.now().isoformat()
+}
+comment_serializer = CommentSerializer(data=comment_data)
+
+if comment_serializer.is_valid(): # 1. Validation (Covered)
+
+    # Now validated_data is available
+    print(comment_serializer.validated_data)
+
+    # Can i get a new Comment instance then?
+    comment = comment_serializer.save() # 2. Save Instances (Next)
+else:
+    print(comment_serializer.errors)
+```
+
+Now that we've detailed the validation step, what's next? With the validated data, we can update or create an instance. In the next post, we'll discuss saving instances from the validated data.
 
 
 ## References
