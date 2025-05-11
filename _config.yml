@@ -20,7 +20,7 @@ rtl                      : # true, false (default) # turns direction of the page
 title                    : "Woog222's Blog"
 title_separator          : "|"
 subtitle                 : # site tagline that appears below site title in masthead
-name                     : "Woog222"
+name                     : "Jake"
 description              : "A blog for personal organization"
 url                      : "https://woog222.github.io"
 baseurl                  : # the subpath of your site, e.g. "/blog"
@@ -113,7 +113,7 @@ analytics:
 
 # Site Author
 author:
-  name             : "Woog222"
+  name             : "Jake"
   avatar           : # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
   bio              : "Journey to Guru"
   location         : "South Korea"
